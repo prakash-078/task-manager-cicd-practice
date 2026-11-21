@@ -1,0 +1,7 @@
+services:
+  taskflow:
+    image: YOUR_DOCKERHUB_USERNAME/taskflow:latest
+    container_name: taskflow
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

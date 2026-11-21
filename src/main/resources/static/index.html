@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow | CI/CD Practice</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="shell">
+    <header>
+        <div class="eyebrow">JAVA + SPRING BOOT PRACTICE</div>
+        <h1>TaskFlow</h1>
+        <p class="subtitle">A small task manager to practise Git, Maven, Docker and deployment.</p>
+    </header>
+
+    <section class="panel">
+        <form id="task-form">
+            <input id="task-title" type="text" maxlength="120"
+                   placeholder="What do you need to do?" autocomplete="off" required>
+            <button type="submit">Add task</button>
+        </form>
+        <div class="summary">
+            <span id="task-count">Loading tasks...</span>
+            <span id="task-progress"></span>
+        </div>
+        <ul id="task-list"></ul>
+        <p id="message" role="status"></p>
+    </section>
+    <footer>TaskFlow · Spring Boot REST API · In-memory data (resets when the app restarts)</footer>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
