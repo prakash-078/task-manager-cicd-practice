@@ -1,22 +1,23 @@
-name: TaskFlow Docker CI
+
+name: TaskFlow Continuous Deployment
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
   workflow_dispatch:
 
 jobs:
-  test-build-push:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      # 1. Get source code
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Configure Java 21
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
@@ -24,24 +25,48 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Run tests and package application
+      # 3. Build and test
+      - name: Build application
         run: mvn clean verify
 
+      # 4. Configure Docker
       - name: Set up Docker Buildx
-        if: github.event_name == 'push'
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push'
+      # 5. Login to Docker Hub
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        if: github.event_name == 'push'
+      # 6. Build and publish Docker image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: prakash078/task-manager-cicd-practice:latest
+
+      # 7. Connect to EC2 and deploy
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          envs: DOCKER_USERNAME,DOCKER_PASSWORD
+          script: |
+            echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
+            sudo docker pull prakash078/task-manager-cicd-practice:latest
+            sudo docker stop task-manager-1 || true
+            sudo docker rm task-manager-1 || true
+            sudo docker run -d \
+              --name task-manager-1 \
+              --restart unless-stopped \
+              -p 8090:8080 \
+              prakash078/task-manager-cicd-practice:latest
